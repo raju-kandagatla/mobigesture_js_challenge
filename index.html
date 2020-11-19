@@ -1,0 +1,299 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mobigesture js challenge</title>
+<!--<link href="http://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">-->
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">-->
+<link href="jquery.paginate.css" rel="stylesheet" type="text/css">
+
+<!--<script src="http://code.jquery.com/jquery-1.12.4.min.js"></script>-->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="jquery.paginate.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="container" style="margin-top:10px;">
+
+<div align='right'><input type="button" class='btn btn-primary' name="edituser" id='edituser' value="Edit" onclick='javascript:userEdit();'/>&nbsp;&nbsp;<input type="button" class='btn btn-primary' name="adduser" id='adsuser' onclick='javascript:userAdd();' value="ADD User"/>&nbsp;&nbsp;<input type="button" class='btn btn-danger' name="deleteuser" id='deleteuser' onclick='javascript:userDelete();' value="Delete User(s)"/>
+</div>
+		<table id='myTable' class="table table-bordered table-striped">
+				 <thead>
+					<tr>
+						<th><input type= 'checkbox' name='selectAll' id='selectAll' class='selectAll' ></th>
+						<th>User Id</th>
+						<th>Title</th>
+						<th>Body</th>
+					</tr>
+				</thead>
+				<tbody id='t_body'>
+				</tbody>
+		</table>
+	</div>
+</body>
+</html>
+
+<script type='text/javascript'>
+
+$(document).ready( function (){
+
+		$.get("https://jsonplaceholder.typicode.com/posts/", function(data, status){
+			//alert("Data: " + data + "\nStatus: " + status);
+			$.each(data, function (index, value) {
+				//console.log(value.userId)
+				append_html = '<tr><td><input type= "checkbox" name="select-one[]" id="select-one_'+value.userId+'" class="select-one" value= '+value.userId+' ></td><td>'+value.userId+'</td><td id="title_'+value.userId+'">'+value.title+'</td><td id="body_'+value.userId+'">'+value.body+'</td></tr>';
+				
+				$('#myTable tr:last').after(append_html)
+			})
+			
+			
+			
+		  });
+		  
+	 $('#selectAll').click (function () {
+		 var checkedStatus = this.checked;
+			$('#myTable tr').find('td:first :checkbox').each(function () {
+			$(this).prop('checked', checkedStatus);
+		 });
+	});
+	 $('#myTable').paginate({
+        'elemsPerPage': 5,
+
+    });
+   
+});
+
+function userEdit(){
+	
+	 var ckbox = $('.select-one');
+	 
+		if (ckbox.is(':checked') && $('[name="select-one[]"]:checked').length == 1) 
+		{
+			checkedvalue = $('[name="select-one[]"]:checked').val();
+			title_text = $("#myTable #title_"+checkedvalue+"").text();
+			body_text = $("#myTable #body_"+checkedvalue+"").text();
+			$('#title_txt').val(title_text);
+			$('#body_content').val(body_text);
+			$("#editmodal").modal('show');
+			$('#update_rec').click(function(){	
+					
+					update_title= $('#title_txt').val();
+					update_body= $('#title_txt').val();
+					$('#body_content').val(body_text);
+					
+					$.ajax({  
+						url: 'https://jsonplaceholder.typicode.com/posts/'+checkedvalue+'',  
+						type: 'PUT',  
+						dataType: 'json',  
+						data: {'userId': checkedvalue, 'title':update_title,'body':update_body},  
+						success: function (data, textStatus, xhr) {   
+							alert('updated successfully');	
+							$("#editmodal").modal('hide');		
+							location.reload(); 
+						},  
+						error: function (xhr, textStatus, errorThrown) {  
+							console.log('Error in Operation');  
+						}  
+					});
+			
+			});
+		
+		} 
+		else if(ckbox.is(':checked') && $('[name="select-one[]"]:checked').length > 1){
+			alert('select only one record');
+			location.reload(); 
+		}
+		
+		else {
+				alert('please select atleast one record');
+		}
+
+}
+
+function userAdd(){
+	
+	 $("#addmodal").modal('show');
+	 $('#add_rec').click(function(){	
+					
+					title= $('#title_txt').val();
+					body= $('#title_txt').val();
+					
+					$.ajax({  
+						url: 'https://jsonplaceholder.typicode.com/posts',  
+						type: 'POST',  
+						dataType: 'json',  
+						data: {'userId': 1, 'title':title,'body':body},  
+						success: function (data, textStatus, xhr) {   
+							alert('updated successfully');	
+							$("#editmodal").modal('hide');		
+							location.reload(); 
+						},  
+						error: function (xhr, textStatus, errorThrown) {  
+							console.log('Error in Operation');  
+						}  
+					});
+			
+			});
+}
+
+function userDelete(){
+
+	 var ckbox = $('.select-one');
+	 
+		if (ckbox.is(':checked') && $('[name="select-one[]"]:checked').length > 0) 
+		{
+		
+				var checkedArr = [];
+				$('[name="select-one[]"]:checked').each(function(i){
+					checkedArr.push($(this).val());
+				});
+				
+				// In api documentation [ https://jsonplaceholder.typicode.com/guide/ ] have single deletion so adding and choosing below one
+				
+				idTodelete = $('[name="select-one[]"]:checked').val();
+				//console.log('checkedArr'+checkedArr);
+				$("#deletemodal").modal('show');
+						
+			 $("#deletemodal").modal('show');
+			 
+			 $('#delete_users').click(function(){	
+					
+							
+							$.ajax({  
+								url: 'https://jsonplaceholder.typicode.com/posts/'+idTodelete+'',  
+								type: 'DELETE',  
+								dataType: 'json',  
+								data: {'userId': idTodelete},  
+								success: function (data, textStatus, xhr) {   
+									alert('user(s) deleted successfully');	
+									$("#editmodal").modal('hide');		
+									location.reload(); 
+								},  
+								error: function (xhr, textStatus, errorThrown) {  
+									console.log('Error in Operation');  
+								}  
+							});
+					
+					});
+		
+		
+		} 
+		
+		else {
+				alert('please select atleast one record');
+		}
+		
+		
+		
+		//-----------------------
+
+}
+
+
+
+</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36251023-1']);
+  _gaq.push(['_setDomainName', 'jqueryscript.net']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<div class="modal" id='editmodal' tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+						<form action="/action_page.php">
+						  <div class="form-group">
+							<label for="title_txt">Title</label>
+							<input type="text" class="form-control" id="title_txt">
+						  </div>
+						  <div class="form-group">
+							<label for="pwd">Body</label>
+							<textarea class="form-control" id="body_content"></textarea>
+						  </div>						  
+						</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id='update_rec'>Update</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id='addmodal' tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+						<form action="/action_page.php">
+						  <div class="form-group">
+							<label for="title_txt">Title</label>
+							<input type="text" class="form-control" id="title_txt">
+						  </div>
+						  <div class="form-group">
+							<label for="pwd">Body</label>
+							<textarea class="form-control" id="body_content"></textarea>
+						  </div>						  
+						</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id='add_rec'>Add</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id='deletemodal' tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+			<ul class='alert alert-danger'><li>Are you sure you want to delete selected record(s)?</li></ul>			
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id='delete_users'>Delete</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
